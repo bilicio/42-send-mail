@@ -70,7 +70,7 @@ table, td { color: #000000; } @media (max-width: 480px) { #u_content_heading_2 .
   
   
 
-<!--[if !mso]><!--><link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet" type="text/css"><link href="https://fonts.googleapis.com/css2?family=Arvo&display=swap" rel="stylesheet" type="text/css"><!--<![endif]-->
+<!--[if !mso]><!--><link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet" type="text/css"><!--<![endif]-->
 
 </head>
 
@@ -101,7 +101,7 @@ table, td { color: #000000; } @media (max-width: 480px) { #u_content_heading_2 .
       <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:60px 10px 20px;font-family:'Raleway',sans-serif;" align="left">
         
   <!--[if mso]><table role="presentation" width="100%"><tr><td><![endif]-->
-    <h1 class="v-line-height v-font-size" style="margin: 0px; color: #ffffff; line-height: 120%; text-align: center; word-wrap: break-word; font-family: Arvo; font-size: 28px; font-weight: 400;"><span>De Desafio em Desafio, At&eacute; a Vit&oacute;ria!</span></h1>
+   <h1 class="v-line-height v-font-size" style="margin: 0px; color: #ffffff; line-height: 120%; text-align: center; word-wrap: break-word; font-family: 'Raleway',sans-serif; font-size: 28px; font-weight: 400;"><span>De Desafio em Desafio, At&eacute; a Vit&oacute;ria!</span></h1>
   <!--[if mso]></td></tr></table><![endif]-->
 
       </td>
@@ -142,10 +142,10 @@ table, td { color: #000000; } @media (max-width: 480px) { #u_content_heading_2 .
 
   
   
-<div class="u-row-container" style="padding: 0px;background-color: transparent">
-  <div class="u-row" style="margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;">
+<div class="u-row-container" style="padding: 0px;background-color: #ffffff">
+  <div class="u-row" style="margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #ffffff;">
     <div style="border-collapse: collapse;display: table;width: 100%;height: 100%;background-color: transparent;">
-      <!--[if (mso)|(IE)]><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: transparent;"><![endif]-->
+      <!--[if (mso)|(IE)]><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: #ffffff;" align="center"><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: #ffffff;"><![endif]-->
       
 <!--[if (mso)|(IE)]><td align="center" width="580" style="background-color: #ffffff;width: 580px;padding: 0px;border-top: 0px solid transparent;border-left: 10px solid #000000;border-right: 10px solid #000000;border-bottom: 10px solid #000000;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;" valign="top"><![endif]-->
 <div class="u-col u-col-100" style="max-width: 320px;min-width: 600px;display: table-cell;vertical-align: top;">
@@ -157,7 +157,7 @@ table, td { color: #000000; } @media (max-width: 480px) { #u_content_heading_2 .
     <tr>
       <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px 60px;font-family:'Raleway',sans-serif;" align="left">
         
-  <div class="v-line-height v-font-size" style="font-size: 14px; line-height: 140%; text-align: center; word-wrap: break-word;">
+  <div class="v-line-height v-font-size" style="font-size: 14px; color: #000000; line-height: 140%; text-align: center; word-wrap: break-word;">
     <p style="line-height: 140%; margin: 0px;">A 42 S&atilde;o Paulo parabeniza voc&ecirc; ${name}, por ter conclu&iacute;do essa jornada intensa, desafiadora e transformadora. Voc&ecirc; provou que resili&ecirc;ncia, colabora&ccedil;&atilde;o e vontade de aprender s&atilde;o as chaves para alcan&ccedil;ar o extraordin&aacute;rio. Este &eacute; s&oacute; o come&ccedil;o &mdash; o futuro &eacute; de seu!</p>
   </div>
 
