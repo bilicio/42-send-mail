@@ -87,7 +87,7 @@ table, td { color: #000000; } @media (max-width: 480px) { #u_content_heading_2 .
   
 <div class="u-row-container" style="padding: 0px;background-color: transparent">
   <div class="u-row" style="margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;">
-    <div style="border-collapse: collapse;display: table;width: 100%;height: 100%;background-color: transparent;">
+    <div style="border-collapse: collapse;display: table;width: 100%;height: 100%;background-color: #ffffff;">
       <!--[if (mso)|(IE)]><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: transparent;"><![endif]-->
       
 <!--[if (mso)|(IE)]><td align="center" width="580" style="background-color: #000000;width: 580px;padding: 0px;border-top: 0px solid transparent;border-left: 10px solid #000000;border-right: 10px solid #000000;border-bottom: 0px solid transparent;" valign="top"><![endif]-->
