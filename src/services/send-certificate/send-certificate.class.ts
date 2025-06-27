@@ -57,7 +57,6 @@ export class SendCertificateService<ServiceParams extends SendCertificateParams 
           clientId: process.env.CLIENT_ID,
           clientSecret: process.env.CLIENT_SECRET,
           refreshToken: process.env.REFRESH_TOKEN,
-          //accessToken: 'ya29.a0AS3H6NzAYrfhJqBCIgZZ3gjkA4CUMmtVr8pJAazbZHG_chuzEzGVcDaTwfdcdVzjktLVnrxjATBz9VEMQT60YRyVYFjROpfSauUe8R6r5hDFBqMFyBLucESRAte7GcWrY2F8NJ9vv00iVsmjYKnnbiE76NGkoQceDGqVdfjbaCgYKAR0SARESFQHGX2MinybUW4-KJLlRkIGter5o6g0175'
         }
       })
 
