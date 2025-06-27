@@ -158,7 +158,7 @@ table, td { color: #000000; } @media (max-width: 480px) { #u_content_heading_2 .
       <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px 60px;font-family:'Raleway',sans-serif;" align="left">
         
   <div class="v-line-height v-font-size" style="font-size: 14px; color: #000000; line-height: 140%; text-align: center; word-wrap: break-word;">
-    <p style="line-height: 140%; margin: 0px;">A 42 S&atilde;o Paulo parabeniza voc&ecirc; ${name}, por ter conclu&iacute;do essa jornada intensa, desafiadora e transformadora. Voc&ecirc; provou que resili&ecirc;ncia, colabora&ccedil;&atilde;o e vontade de aprender s&atilde;o as chaves para alcan&ccedil;ar o extraordin&aacute;rio. Este &eacute; s&oacute; o come&ccedil;o &mdash; o futuro &eacute; de seu!</p>
+    <p style="line-height: 140%; margin: 0px;">A 42 S&atilde;o Paulo parabeniza voc&ecirc; ${name}, por ter conclu&iacute;do essa jornada intensa, desafiadora e transformadora. Voc&ecirc; provou que resili&ecirc;ncia, colabora&ccedil;&atilde;o e vontade de aprender s&atilde;o as chaves para alcan&ccedil;ar o extraordin&aacute;rio. Este &eacute; s&oacute; o come&ccedil;o &mdash; o futuro &eacute; seu!</p>
   </div>
 
       </td>
