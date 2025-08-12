@@ -216,7 +216,7 @@ table, td { color: #000000; } @media (max-width: 480px) { #u_content_heading_2 .
   <tr>
     <td style="padding-right: 0px;padding-left: 0px;" align="center">
       
-      <img align="center" border="0" src="https://42sp-send-mail.4hkf7y.easypanel.host/images/image-2.png" alt="Students sitting on stairs." title="Students sitting on stairs." style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 92%;max-width: 533.6px;" width="533.6" class="v-src-width v-src-max-width"/>
+      <img align="center" border="0" src="https://42sp-send-mail.4hkf7y.easypanel.host/images/image-default.png" alt="Students sitting on stairs." title="Students sitting on stairs." style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 92%;max-width: 533.6px;" width="533.6" class="v-src-width v-src-max-width"/>
       
     </td>
   </tr>
