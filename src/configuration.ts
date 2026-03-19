@@ -12,7 +12,13 @@ export const configurationSchema = {
     ...defaultAppSettings,
     host: { type: 'string' },
     port: { type: 'number' },
-    public: { type: 'string' }
+    public: { type: 'string' },
+    pocketbase: {
+      type: 'object',
+      properties: {
+        url: { type: 'string' }
+      }
+    }
   }
 } as const
 

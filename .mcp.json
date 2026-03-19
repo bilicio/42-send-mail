@@ -1,0 +1,42 @@
+{
+  "mcpServers": {
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "shadcn@latest",
+        "mcp"
+      ]
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--browser-ws-url=http://localhost:9222"
+      ]
+    },
+    "pocketbase-docker-image": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "POCKETBASE_URL=https://42sp-pocketbase-sendmail.4hkf7y.easypanel.host",
+        "-e",
+        "POCKETBASE_ADMIN_EMAIL=tech@42sp.org.br",
+        "-e",
+        "POCKETBASE_ADMIN_PASSWORD=k7*vc2QeX$yR",
+        "pocketbase-mcp"
+      ],
+      "disabled": false,
+      "autoApprove": ["list_collections", "list_records", "get_collection"]
+    },
+    "gitmcp-unlayer": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://gitmcp.io/unlayer/react-email-editor"
+      ]
+    }
+  }
+}
