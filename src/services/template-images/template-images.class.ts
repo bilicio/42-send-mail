@@ -1,5 +1,5 @@
 import type { Id, NullableId, Params, ServiceInterface } from '@feathersjs/feathers'
-import { NotFound } from '@feathersjs/errors'
+import { BadRequest, NotFound } from '@feathersjs/errors'
 import type { Application } from '../../declarations'
 import { pb } from '../../db'
 
@@ -47,7 +47,8 @@ export class TemplateImagesService<
   }
 
   async create(data: TemplateImageData, _params?: ServiceParams): Promise<TemplateImage> {
-    const file = data._file!
+    const file = data._file
+    if (!file) throw new BadRequest('No file provided')
     const formData = new FormData()
 
     formData.append('name', data.name || file.originalname)
