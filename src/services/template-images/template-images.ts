@@ -12,7 +12,13 @@ export const templateImages = (app: Application) => {
   // Multer runs only on POST before the Feathers service picks up the request
   app.use(`/${templateImagesPath}`, (req: any, res: any, next: any) => {
     if (req.method === 'POST') {
-      upload.single('file')(req, res, next)
+      upload.single('file')(req, res, (err: any) => {
+        if (err) return next(err)
+        // Feathers Express v5 builds params from req.feathers, not req itself
+        req.feathers = req.feathers || {}
+        req.feathers.file = req.file
+        next()
+      })
     } else {
       next()
     }
@@ -27,9 +33,9 @@ export const templateImages = (app: Application) => {
     before: {
       create: [
         async (context) => {
-          const req = (context.params as any).req
-          if (req?.file) {
-            context.data = { ...context.data, _file: req.file }
+          const file = (context.params as any).file
+          if (file) {
+            context.data = { ...context.data, _file: file }
           }
         }
       ]

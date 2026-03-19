@@ -18,8 +18,9 @@ export interface EmailTemplatesServiceOptions {
 export interface EmailTemplatesParams extends Params<EmailTemplateQuery> {}
 
 // External image URL patterns that must be migrated to PocketBase
+// Matches any http/https image URL not already hosted on our PocketBase
 const EXTERNAL_IMAGE_PATTERN =
-  /https?:\/\/[^\s"'<>]+(?:unlayer\.com|amazonaws\.com)[^\s"'<>]*/g
+  /https?:\/\/[^\s"'<>]+\.(?:png|jpe?g|gif|webp|svg)[^\s"'<>]*/gi
 
 async function migrateImages(
   html: string,
