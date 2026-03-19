@@ -10,6 +10,7 @@ import type {
 } from './send-email.schema'
 
 const nodemailer = require('nodemailer')
+import { logger } from '../../logger'
 
 export type { SendEmail, SendEmailData, SendEmailPatch, SendEmailQuery }
 
@@ -61,6 +62,7 @@ export class SendEmailService<ServiceParams extends SendEmailParams = SendEmailP
         subject,
         html
       })
+      logger.info('[send-email] to=%s template=%s subject="%s" at=%s', data.to, data.templateId, subject, new Date().toISOString())
     } catch (error) {
       console.error('Error sending email:', error)
       throw new GeneralError('Failed to send email')

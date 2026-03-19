@@ -74,6 +74,24 @@ app.post('/upload-slot', _uploadMulter.single('file'), async (req: any, res: any
 })
 // ──────────────────────────────────────────────────────────────────────────────
 
+// ── Public API: GET /get-templates ────────────────────────────────────────────
+;(app as any).get('/get-templates', async (_req: any, res: any) => {
+  try {
+    const records = await pb.collection('email_templates').getFullList({ sort: '-created' })
+    const templates = records.map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      subject: r.subject,
+      variables: r.variables ?? []
+    }))
+    res.json(templates)
+  } catch (err: any) {
+    logger.error('[get-templates] %O', err)
+    res.status(500).json({ error: 'Failed to fetch templates' })
+  }
+})
+// ──────────────────────────────────────────────────────────────────────────────
+
 // Configure services and real-time functionality
 app.configure(rest())
 app.configure(
