@@ -31,11 +31,11 @@
       "disabled": false,
       "autoApprove": ["list_collections", "list_records", "get_collection"]
     },
-    "gitmcp-unlayer": {
+    "gitmcp-mailbuilder": {
       "command": "npx",
       "args": [
         "mcp-remote",
-        "https://gitmcp.io/unlayer/react-email-editor"
+        "https://gitmcp.io/usewaypoint/email-builder-js"
       ]
     }
   }

@@ -44,6 +44,7 @@
     "bundle:client": "npm run compile && npm pack --pack-destination ./public"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@feathersjs/adapter-commons": "^5.0.34",
     "@feathersjs/authentication": "^5.0.34",
     "@feathersjs/authentication-client": "^5.0.34",
