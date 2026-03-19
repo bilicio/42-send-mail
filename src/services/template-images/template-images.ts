@@ -8,25 +8,17 @@ export const templateImagesPath = 'template-images'
 
 const upload = multer({ storage: multer.memoryStorage() })
 
-// Middleware that runs multer and copies req.file into req.feathers
-// so Feathers spreads it into context.params (via ...req.feathers)
-const multerMiddleware = (req: any, res: any, next: any) => {
-  if (req.method === 'POST') {
-    upload.single('file')(req, res, (err: any) => {
-      if (err) return next(err)
-      req.feathers = req.feathers || {}
-      req.feathers.file = req.file
-      next()
-    })
-  } else {
-    next()
-  }
-}
-
 export const templateImages = (app: Application) => {
-  // Pass multerMiddleware inline so it runs inside the Feathers REST handler,
-  // not as a separate app.use() that the REST handler bypasses.
-  ;(app as any).use(templateImagesPath, multerMiddleware, new TemplateImagesService(getOptions(app)), {
+  // Multer runs only on POST before the Feathers service picks up the request
+  app.use(`/${templateImagesPath}`, (req: any, res: any, next: any) => {
+    if (req.method === 'POST') {
+      upload.single('file')(req, res, next)
+    } else {
+      next()
+    }
+  })
+
+  app.use(templateImagesPath, new TemplateImagesService(getOptions(app)), {
     methods: ['find', 'get', 'create', 'remove'],
     events: []
   })
@@ -35,9 +27,9 @@ export const templateImages = (app: Application) => {
     before: {
       create: [
         async (context) => {
-          const file = (context.params as any).file
-          if (file) {
-            context.data = { ...context.data, _file: file }
+          const req = (context.params as any).req
+          if (req?.file) {
+            context.data = { ...context.data, _file: req.file }
           }
         }
       ]
