@@ -81,8 +81,9 @@ export class EmailTemplatesService<
     try {
       const record = await pb.collection('email_templates').getOne(String(id))
       return this._serialize(record)
-    } catch {
-      throw new NotFound(`Template ${id} not found`)
+    } catch (err: any) {
+      if (err?.status === 404) throw new NotFound(`Template ${id} not found`)
+      throw err
     }
   }
 
@@ -123,8 +124,9 @@ export class EmailTemplatesService<
     try {
       const record = await pb.collection('email_templates').update(String(id), updateData)
       return this._serialize(record)
-    } catch {
-      throw new NotFound(`Template ${id} not found`)
+    } catch (err: any) {
+      if (err?.status === 404) throw new NotFound(`Template ${id} not found`)
+      throw err
     }
   }
 

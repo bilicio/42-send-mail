@@ -26,6 +26,15 @@ export default function TemplateList() {
     }
   }
 
+  const handleDuplicate = async (id: string) => {
+    try {
+      const copy = await templatesApi.duplicate(id)
+      setTemplates((prev) => [copy, ...prev])
+    } catch {
+      alert('Failed to duplicate template')
+    }
+  }
+
   if (loading) return <p style={styles.center}>Loading...</p>
   if (error) return <p style={{ ...styles.center, color: 'red' }}>{error}</p>
 
@@ -62,6 +71,9 @@ export default function TemplateList() {
                   </button>
                   <button style={styles.btnSecondary} onClick={() => navigate(`/templates/${t.id}/send`)}>
                     Send Test
+                  </button>
+                  <button style={styles.btnSecondary} onClick={() => handleDuplicate(t.id)}>
+                    Duplicate
                   </button>
                   <button style={styles.btnDanger} onClick={() => handleDelete(t.id)}>
                     Delete

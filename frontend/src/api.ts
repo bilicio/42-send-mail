@@ -43,7 +43,17 @@ export const templatesApi = {
   create: (data: EmailTemplateData) => api.post<EmailTemplate>('/templates', data).then((r) => r.data),
   update: (id: string, data: Partial<EmailTemplateData>) =>
     api.patch<EmailTemplate>(`/templates/${id}`, data).then((r) => r.data),
-  remove: (id: string) => api.delete(`/templates/${id}`)
+  remove: (id: string) => api.delete(`/templates/${id}`),
+  duplicate: async (id: string): Promise<EmailTemplate> => {
+    const original = await api.get<EmailTemplate>(`/templates/${id}`).then((r) => r.data)
+    return api.post<EmailTemplate>('/templates', {
+      name: `${original.name} (copy)`,
+      subject: original.subject,
+      html_content: original.html_content,
+      design_json: original.design_json,
+      variables: original.variables,
+    }).then((r) => r.data)
+  },
 }
 
 export const templateImagesApi = {
