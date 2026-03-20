@@ -70,4 +70,19 @@ export const sendEmailApi = {
   send: (payload: SendEmailPayload) => api.post('/send-email', payload).then((r) => r.data)
 }
 
+export interface EmailLog {
+  id: string
+  to: string
+  subject: string
+  template_id: string
+  template_name: string
+  status: 'success' | 'error'
+  error_message: string
+  created: string
+}
+
+export const emailLogsApi = {
+  list: () => api.get<{ data: EmailLog[] }>('/email-logs').then((r) => r.data.data ?? r.data),
+}
+
 export default api

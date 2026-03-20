@@ -42,9 +42,14 @@ export default function TemplateList() {
     <div style={styles.container}>
       <div style={styles.header}>
         <h1 style={styles.title}>Email Templates</h1>
-        <Link to="/templates/new" style={styles.btnPrimary}>
-          + New Template
-        </Link>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link to="/logs" style={styles.btnSecondary}>
+            Logs
+          </Link>
+          <Link to="/templates/new" style={styles.btnPrimary}>
+            + New Template
+          </Link>
+        </div>
       </div>
 
       {templates.length === 0 ? (

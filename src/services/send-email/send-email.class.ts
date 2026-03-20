@@ -31,6 +31,7 @@ export class SendEmailService<ServiceParams extends SendEmailParams = SendEmailP
     try {
       record = await pb.collection('email_templates').getOne(String(data.templateId))
     } catch {
+      await this._log({ to: data.to, subject: data.subject, templateId: data.templateId, templateName: undefined, status: 'error', errorMessage: `Template ${data.templateId} not found` })
       throw new NotFound(`Template ${data.templateId} not found`)
     }
 
@@ -62,13 +63,42 @@ export class SendEmailService<ServiceParams extends SendEmailParams = SendEmailP
         subject,
         html
       })
-      logger.info('[send-email] to=%s template=%s subject="%s" at=%s', data.to, data.templateId, subject, new Date().toISOString())
-    } catch (error) {
-      console.error('Error sending email:', error)
+
+      const successMsg = `[send-email] SUCCESS | to: ${data.to} | template: "${record.name}" (${data.templateId}) | subject: "${subject}" | at: ${new Date().toISOString()}`
+      console.log(successMsg)
+      logger.info(successMsg)
+      await this._log({ to: data.to, subject, templateId: data.templateId, templateName: record.name, status: 'success' })
+    } catch (error: any) {
+      const errorMsg = `[send-email] ERROR | to: ${data.to} | template: "${record.name}" (${data.templateId}) | subject: "${subject}" | error: ${error?.message ?? error} | at: ${new Date().toISOString()}`
+      console.error(errorMsg)
+      logger.error(errorMsg)
+      await this._log({ to: data.to, subject, templateId: data.templateId, templateName: record.name, status: 'error', errorMessage: error?.message ?? String(error) })
       throw new GeneralError('Failed to send email')
     }
 
     return data
+  }
+
+  private async _log(entry: {
+    to: string
+    subject?: string
+    templateId?: string
+    templateName?: string
+    status: 'success' | 'error'
+    errorMessage?: string
+  }) {
+    try {
+      await pb.collection('email_logs').create({
+        to: entry.to,
+        subject: entry.subject ?? '',
+        template_id: entry.templateId ?? '',
+        template_name: entry.templateName ?? '',
+        status: entry.status,
+        error_message: entry.errorMessage ?? '',
+      })
+    } catch (err) {
+      logger.warn('[send-email] Failed to write log entry: %O', err)
+    }
   }
 
   // Satisfy interface — not exposed
