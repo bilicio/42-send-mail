@@ -11,6 +11,16 @@ export async function authenticatePocketBase() {
   const email = process.env.POCKETBASE_ADMIN_EMAIL
   const password = process.env.POCKETBASE_ADMIN_PASSWORD
   if (email && password) {
+    console.log('[PocketBase] Autenticando como', email)
     await pb.collection('_superusers').authWithPassword(email, password)
+    console.log('[PocketBase] Autenticado com sucesso. Token válido:', pb.authStore.isValid)
+  }
+}
+
+/** Garante que o token está válido, re-autentica se necessário */
+export async function ensureAuth() {
+  if (!pb.authStore.isValid) {
+    console.warn('[PocketBase] Token expirado ou ausente, re-autenticando...')
+    await authenticatePocketBase()
   }
 }

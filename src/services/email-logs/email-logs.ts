@@ -1,5 +1,5 @@
 import type { Application } from '../../declarations'
-import { pb } from '../../db'
+import { pb, ensureAuth } from '../../db'
 
 export const emailLogsPath = 'email-logs'
 
@@ -20,10 +20,12 @@ export const emailLogs = (app: Application) => {
   // GET /email-logs — full list (used by the frontend page)
   ;(app as any).get(`/${emailLogsPath}`, async (_req: any, res: any) => {
     try {
+      await ensureAuth()
       const records = await pb.collection('email_logs').getFullList({ sort: '-created' })
       res.json(records.map(serialize))
-    } catch {
-      res.status(500).json({ error: 'Failed to fetch logs' })
+    } catch (err) {
+      console.error('[email-logs] Error:', err)
+      res.status(500).json({ error: 'Failed to fetch logs', details: String(err) })
     }
   })
 
@@ -48,6 +50,7 @@ export const emailLogs = (app: Application) => {
         : undefined
 
     try {
+      await ensureAuth()
       // Fetch the latest log for each email in parallel
       const results = await Promise.all(
         sanitized.map(async (email) => {
@@ -65,8 +68,9 @@ export const emailLogs = (app: Application) => {
       )
 
       res.json(results)
-    } catch {
-      res.status(500).json({ error: 'Failed to query logs' })
+    } catch (err) {
+      console.error('[email-logs/query] Error:', err)
+      res.status(500).json({ error: 'Failed to query logs', details: String(err) })
     }
   })
 }
