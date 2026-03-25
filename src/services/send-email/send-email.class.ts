@@ -1,7 +1,7 @@
 import type { Id, NullableId, Params, ServiceInterface } from '@feathersjs/feathers'
 import { NotFound, GeneralError } from '@feathersjs/errors'
 import type { Application } from '../../declarations'
-import { pb } from '../../db'
+import { pb, ensureAuth } from '../../db'
 import type {
   SendEmail,
   SendEmailData,
@@ -88,6 +88,7 @@ export class SendEmailService<ServiceParams extends SendEmailParams = SendEmailP
     errorMessage?: string
   }) {
     try {
+      await ensureAuth()
       await pb.collection('email_logs').create({
         to: entry.to,
         subject: entry.subject ?? '',
