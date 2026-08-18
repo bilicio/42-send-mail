@@ -17,10 +17,39 @@ export async function authenticatePocketBase() {
   }
 }
 
+// Deduplica re-autenticações concorrentes: se várias requisições dispararem ao
+// mesmo tempo com o token expirado, todas aguardam a mesma promessa de auth.
+let authInFlight: Promise<void> | null = null
+
 /** Garante que o token está válido, re-autentica se necessário */
 export async function ensureAuth() {
-  if (!pb.authStore.isValid) {
+  if (pb.authStore.isValid) return
+  if (!authInFlight) {
     console.warn('[PocketBase] Token expirado ou ausente, re-autenticando...')
-    await authenticatePocketBase()
+    authInFlight = authenticatePocketBase().finally(() => {
+      authInFlight = null
+    })
   }
+  await authInFlight
+}
+
+// Choke point: antes de CADA requisição ao PocketBase, garante um token de
+// superusuário válido e injeta o token atual no header Authorization.
+//
+// Isto é necessário porque o `initSendOptions` do SDK grava o header
+// Authorization com o token vigente ANTES do beforeSend rodar — então apenas
+// re-autenticar aqui não basta: precisamos sobrescrever o header com o token
+// já renovado. Sem isso, o token expirado do startup continuava sendo enviado
+// e o PocketBase respondia 403 "Only superusers can perform this action".
+//
+// A própria requisição de autenticação (auth-with-password) é ignorada para
+// evitar recursão infinita.
+pb.beforeSend = async (requestUrl, options) => {
+  if (!requestUrl.includes('/auth-with-password')) {
+    await ensureAuth()
+    if (pb.authStore.token) {
+      options.headers = { ...(options.headers || {}), Authorization: pb.authStore.token }
+    }
+  }
+  return { url: requestUrl, options }
 }
