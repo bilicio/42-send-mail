@@ -11,6 +11,7 @@ import type {
 
 const nodemailer = require('nodemailer')
 import { logger } from '../../logger'
+import { scheduleEmailSend } from '../email-rate-limiter'
 
 export type { SendEmail, SendEmailData, SendEmailPatch, SendEmailQuery }
 
@@ -57,12 +58,14 @@ export class SendEmailService<ServiceParams extends SendEmailParams = SendEmailP
         }
       })
 
-      await transporter.sendMail({
-        from: 'imersao@42sp.org.br',
-        to: data.to,
-        subject,
-        html
-      })
+      await scheduleEmailSend(() =>
+        transporter.sendMail({
+          from: 'imersao@42sp.org.br',
+          to: data.to,
+          subject,
+          html
+        })
+      )
 
       const successMsg = `[send-email] SUCCESS | to: ${data.to} | template: "${record.name}" (${data.templateId}) | subject: "${subject}" | at: ${new Date().toISOString()}`
       console.log(successMsg)

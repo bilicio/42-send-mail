@@ -11,6 +11,7 @@ import type {
   SendCertificateQuery
 } from './send-certificate.schema'
 import { certificate } from '../../mail-templates/certificate';
+import { scheduleEmailSend } from '../email-rate-limiter';
 
 export type { SendCertificate, SendCertificateData, SendCertificatePatch, SendCertificateQuery }
 
@@ -70,7 +71,7 @@ export class SendCertificateService<ServiceParams extends SendCertificateParams 
 
       
 
-      await transporter.sendMail(mailOptions)
+      await scheduleEmailSend(() => transporter.sendMail(mailOptions))
 
       return {
       
