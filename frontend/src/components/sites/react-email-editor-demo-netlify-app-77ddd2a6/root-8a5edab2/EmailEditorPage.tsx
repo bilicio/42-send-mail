@@ -653,7 +653,7 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
       setSavedAt(Date.now());
       setVariables(saved.variables ?? merged);
       if (!templateId && saved.id) {
-        router.replace(`/templates/${saved.id}/edit`);
+        router.replace(`/templates/edit?id=${saved.id}`);
       }
     } catch (err) {
       window.alert(
@@ -743,7 +743,7 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
       </button>
       {templateId ? (
         <Link
-          href={`/templates/${templateId}/send`}
+          href={`/templates/send?id=${templateId}`}
           className="email-editor-header-ghost"
           style={headerLinkButtonStyle}
         >

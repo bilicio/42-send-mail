@@ -287,7 +287,7 @@ export function TemplateListPage() {
       // Discard unused var to keep meta reference tidy; TS/eslint don't complain
       // and the read documents intent (we deliberately drop is_example).
       void meta;
-      router.push(`/templates/${created.id}/edit`);
+      router.push(`/templates/edit?id=${created.id}`);
     } catch (err) {
       window.alert(
         `Failed to clone: ${err instanceof Error ? err.message : String(err)}`,
@@ -444,13 +444,13 @@ export function TemplateListPage() {
                       </td>
                       <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
                         <Link
-                          href={`/templates/${t.id}/edit`}
+                          href={`/templates/edit?id=${t.id}`}
                           style={{ ...btnSecondary, marginRight: 6 }}
                         >
                           Edit
                         </Link>
                         <Link
-                          href={`/templates/${t.id}/send`}
+                          href={`/templates/send?id=${t.id}`}
                           style={{ ...btnPrimary, marginRight: 6 }}
                         >
                           Send Test
