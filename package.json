@@ -42,7 +42,7 @@
     "mocha": "cross-env NODE_ENV=test mocha test/ --require ts-node/register --recursive --extension .ts --exit",
     "test": "npm run mocha",
     "bundle:client": "npm run compile && npm pack --pack-destination ./public",
-    "build:frontend": "cd frontend && npm run build && shx cp -R out/. ../public/"
+    "build:frontend": "cd frontend && npm run build && shx rm -rf ../public/_next && shx cp -R out/. ../public/"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
