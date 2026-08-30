@@ -34,8 +34,10 @@ app.use(
     optionsSuccessStatus: 204
   })
 )
-app.use(json())
-app.use(urlencoded({ extended: true }))
+// 10 MB is comfortably above the largest Unlayer stock template (~200 KB) plus
+// serialized design_json, without opening the door for accidental huge uploads.
+app.use(json({ limit: '10mb' }))
+app.use(urlencoded({ extended: true, limit: '10mb' }))
 // Host the public folder
 app.use('/', serveStatic(app.get('public')))
 
@@ -70,6 +72,36 @@ app.post('/upload-slot', _uploadMulter.single('file'), async (req: any, res: any
   } catch (err: any) {
     logger.error('[upload-slot] Error: %O', err)
     res.status(500).send('Upload failed')
+  }
+})
+// ──────────────────────────────────────────────────────────────────────────────
+
+// ── Thumbnail upload: POST /template-thumbnails ───────────────────────────────
+// Same PocketBase-backed upload as /upload-slot, but returns JSON so the
+// frontend can read the resulting URL directly. Used by the editor's "Save as
+// example" checkbox to persist a preview image alongside the template.
+app.post('/template-thumbnails', _uploadMulter.single('file'), async (req: any, res: any) => {
+  try {
+    const file = req.file as Express.Multer.File | undefined
+    if (!file) {
+      return res.status(400).json({ error: 'No file received' })
+    }
+    const contentType = file.mimetype || 'image/png'
+    const ext = (contentType.split('/')[1] || 'png').split('+')[0]
+    const filename = (req.body?.name as string | undefined) ||
+      `thumb-${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`
+
+    const formData = new FormData()
+    formData.append('name', filename)
+    formData.append('file', new Blob([file.buffer], { type: contentType }), filename)
+    const record = await pb.collection('template_images').create(formData)
+    const pocketbaseUrl = (process.env.POCKETBASE_URL || '').replace(/\/$/, '')
+    const url = `${pocketbaseUrl}/api/files/template_images/${record.id}/${(record as any).file}`
+
+    res.json({ id: record.id, url, name: filename })
+  } catch (err: any) {
+    logger.error('[template-thumbnails] %O', err)
+    res.status(500).json({ error: 'Upload failed' })
   }
 })
 // ──────────────────────────────────────────────────────────────────────────────
