@@ -12,6 +12,7 @@ import type {
 const nodemailer = require('nodemailer')
 import { logger } from '../../logger'
 import { scheduleEmailSend } from '../email-rate-limiter'
+import { normalizeEmail } from '../../utils/email'
 
 export type { SendEmail, SendEmailData, SendEmailPatch, SendEmailQuery }
 
@@ -93,7 +94,8 @@ export class SendEmailService<ServiceParams extends SendEmailParams = SendEmailP
     try {
       await ensureAuth()
       await pb.collection('email_logs').create({
-        to: entry.to,
+        // Sempre em minúsculas: é o que torna a busca por `to` confiável.
+        to: normalizeEmail(entry.to),
         subject: entry.subject ?? '',
         template_id: entry.templateId ?? '',
         template_name: entry.templateName ?? '',
