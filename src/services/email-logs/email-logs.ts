@@ -1,5 +1,6 @@
 import type { Application } from '../../declarations'
 import { pb, ensureAuth } from '../../db'
+import { normalizeEmail } from '../../utils/email'
 
 export const emailLogsPath = 'email-logs'
 
@@ -54,15 +55,24 @@ export const emailLogs = (app: Application) => {
       // Fetch the latest log for each email in parallel
       const results = await Promise.all(
         sanitized.map(async (email) => {
-          const safe = email.replace(/"/g, '')
+          const alvo = normalizeEmail(email)
+          const safe = alvo.replace(/"/g, '')
+          // `~` é o LIKE do PocketBase, case-insensitive — diferente de `=`.
+          // É o que encontra também os registros gravados antes da normalização
+          // do `to`, que ficaram com maiúsculas ("Fulano@x.com").
+          //
+          // Como LIKE envolve o valor em %...%, isso também traz quem tem o
+          // alvo como sufixo (ana@x.com aparece dentro de joana@x.com) e trata
+          // `_` do email como curinga. Por isso a igualdade exata é conferida
+          // abaixo, em JS: o filtro só estreita, quem decide é o `find`.
           const filter = templateId
-            ? `to = "${safe}" && template_id = "${templateId.replace(/"/g, '')}"`
-            : `to = "${safe}"`
-          const records = await pb.collection('email_logs').getList(1, 1, {
+            ? `to ~ "${safe}" && template_id = "${templateId.replace(/"/g, '')}"`
+            : `to ~ "${safe}"`
+          const records = await pb.collection('email_logs').getFullList({
             filter,
             sort: '-created',
           })
-          const last = records.items[0]
+          const last = records.find((r: any) => normalizeEmail(r.to) === alvo)
           return last ? { email, log: serialize(last) } : { email, log: null }
         })
       )
