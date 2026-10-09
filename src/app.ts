@@ -20,6 +20,7 @@ import { logError } from './hooks/log-error'
 import { services } from './services/index'
 import { channels } from './channels'
 import { pb } from './db'
+import { isExampleTemplate } from './utils/template'
 
 const app: Application = express(feathers())
 
@@ -107,10 +108,12 @@ app.post('/template-thumbnails', _uploadMulter.single('file'), async (req: any, 
 // ──────────────────────────────────────────────────────────────────────────────
 
 // ── Public API: GET /get-templates ────────────────────────────────────────────
+// Só templates criados normalmente ou clonados de um exemplo — os exemplos da
+// galeria são modelos de partida e não devem ser usados para envio.
 ;(app as any).get('/get-templates', async (_req: any, res: any) => {
   try {
     const records = await pb.collection('email_templates').getFullList({ sort: '-created' })
-    const templates = records.map((r: any) => ({
+    const templates = records.filter((r: any) => !isExampleTemplate(r)).map((r: any) => ({
       id: r.id,
       name: r.name,
       subject: r.subject,
