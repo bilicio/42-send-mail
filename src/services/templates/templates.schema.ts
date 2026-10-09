@@ -83,7 +83,9 @@ export const emailTemplateQuerySchema = {
     ...querySyntax({
       id: { type: 'string' },
       name: { type: 'string' }
-    })
+    }),
+    // false (padrão): só templates normais/clonados; true: só os exemplos da galeria
+    is_example: { type: 'boolean' }
   }
 } as const
 export type EmailTemplateQuery = FromSchema<typeof emailTemplateQuerySchema>

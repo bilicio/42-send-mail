@@ -210,9 +210,8 @@ export function TemplateListPage() {
   const [galleryPage, setGalleryPage] = useState(0);
 
   useEffect(() => {
-    templatesApi
-      .list()
-      .then(setTemplates)
+    Promise.all([templatesApi.listExamples(), templatesApi.list()])
+      .then(([exampleList, userList]) => setTemplates([...exampleList, ...userList]))
       .catch((err: Error) => setError(err.message ?? "Failed to load"))
       .finally(() => setLoading(false));
   }, []);

@@ -27,6 +27,7 @@ import {
   type EmailTemplate,
 } from "@/lib/api";
 import { captureHtmlThumbnail } from "@/lib/thumbnail";
+import { legacyHtmlToMjml } from "@/lib/legacy-mjml";
 
 /*
  * Layout math for grapesjs: 60px header + 45px meta bar + 45px variables bar
@@ -213,6 +214,41 @@ interface EmailEditorPageProps {
  */
 function isGrapesProjectData(design: Record<string, unknown>): boolean {
   return Array.isArray((design as { pages?: unknown[] }).pages);
+}
+
+/*
+ * A template opened from legacy HTML and then saved keeps grapesjs projectData
+ * made of plain HTML components (tables/divs) with no mj-body. grapesjs-mjml
+ * blocks can only be dropped into MJML parents, so such a project can't take a
+ * button or column. Treat it like legacy HTML and rebuild it as MJML.
+ */
+function hasMjmlTree(design: Record<string, unknown>): boolean {
+  return JSON.stringify(design.pages ?? []).includes('"mj-body"');
+}
+
+/*
+ * Without an upload handler grapesjs embeds images as base64 data URIs. Gmail
+ * (and most clients) block those, so the image showed in the editor but not in
+ * the sent email. Upload to PocketBase and reference the image by URL instead.
+ */
+async function uploadAssets(
+  editor: Editor,
+  files: FileList | File[],
+): Promise<string[]> {
+  const images = Array.from(files).filter((f) => f.type.startsWith("image/"));
+  const urls: string[] = [];
+  for (const file of images) {
+    try {
+      const uploaded = await templateImagesApi.upload(file, file.name);
+      editor.AssetManager.add({ type: "image", src: uploaded.url, name: file.name });
+      urls.push(uploaded.url);
+    } catch (err) {
+      window.alert(
+        `Failed to upload ${file.name}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+  return urls;
 }
 
 /*
@@ -463,7 +499,8 @@ function hydrateEditor(editor: Editor, tpl: EmailTemplate): void {
     if (
       design &&
       Object.keys(design).length > 0 &&
-      isGrapesProjectData(design)
+      isGrapesProjectData(design) &&
+      hasMjmlTree(design)
     ) {
       editor.loadProjectData(
         design as Parameters<Editor["loadProjectData"]>[0],
@@ -471,9 +508,9 @@ function hydrateEditor(editor: Editor, tpl: EmailTemplate): void {
       return;
     }
     if (tpl.html_content?.trim()) {
-      // Wrap in mj-body so grapesjs-mjml has something valid to parse; if the
-      // stored html is already MJML-based this is a no-op via the parser.
-      editor.setComponents(tpl.html_content);
+      // Legacy/plain HTML → MJML so the block panel can drop into it. The next
+      // save stores real MJML projectData, so this only runs once per template.
+      editor.setComponents(legacyHtmlToMjml(tpl.html_content));
     }
   } catch (err) {
     console.warn("Failed to load stored design", err);
@@ -503,6 +540,20 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
       height: EDITOR_HEIGHT_CSS,
       width: "auto",
       storageManager: false,
+      assetManager: {
+        // Only enables the upload input; uploadFile below does the request.
+        upload: "/template-thumbnails",
+        embedAsBase64: false,
+        uploadFile: async (ev, clb) => {
+          const e = ev as unknown as DragEvent;
+          const files =
+            e.dataTransfer?.files ?? (e.target as HTMLInputElement | null)?.files;
+          if (!files?.length) return;
+          const urls = await uploadAssets(editor, files);
+          // Files dropped straight onto the canvas wait for this callback.
+          clb?.({ data: urls });
+        },
+      },
       plugins: [
         (ed: Editor) =>
           mjmlPlugin(ed, {
@@ -520,6 +571,9 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
       templatesApi
         .get(templateId)
         .then((tpl) => {
+          // The editor may have been destroyed meanwhile (StrictMode remount,
+          // navigating away) — don't touch it.
+          if (editorRef.current !== editor) return;
           setName(tpl.name);
           setSubject(tpl.subject);
           setVariables(tpl.variables ?? []);

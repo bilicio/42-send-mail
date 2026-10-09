@@ -155,8 +155,14 @@ export const templateImagesApi = {
 };
 
 export const templatesApi = {
+  // The backend leaves example templates out of GET /templates; they're only
+  // returned when explicitly asked for with ?is_example=true.
   list: async (): Promise<EmailTemplate[]> => {
     const payload = await request<unknown>("GET", "/templates");
+    return extractList<EmailTemplate>(payload);
+  },
+  listExamples: async (): Promise<EmailTemplate[]> => {
+    const payload = await request<unknown>("GET", "/templates?is_example=true");
     return extractList<EmailTemplate>(payload);
   },
   get: (id: string) => request<EmailTemplate>("GET", `/templates/${id}`),

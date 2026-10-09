@@ -2,6 +2,7 @@ import type { Id, NullableId, Params, ServiceInterface } from '@feathersjs/feath
 import { NotFound } from '@feathersjs/errors'
 import type { Application } from '../../declarations'
 import { pb } from '../../db'
+import { isExampleTemplate } from '../../utils/template'
 import type {
   EmailTemplate,
   EmailTemplateData,
@@ -21,6 +22,8 @@ export interface EmailTemplatesParams extends Params<EmailTemplateQuery> {}
 const EXTERNAL_IMAGE_PATTERN =
   /https?:\/\/[^\s"'<>]+(?:unlayer\.com|amazonaws\.com)[^\s"'<>]*/g
 
+const DATA_IMAGE_PATTERN = /data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+/gi
+
 async function migrateImages(
   html: string,
   designJson: any
@@ -36,6 +39,37 @@ async function migrateImages(
   ].filter((url) => !url.startsWith(pocketbaseUrl)))
 
   const imageIds: string[] = []
+
+  // Imagens embutidas em base64 (data:image/...) são bloqueadas pelo Gmail e
+  // pela maioria dos clientes de email: aparecem no editor, mas somem no email
+  // enviado. Viram arquivos no PocketBase e passam a ser referenciadas por URL.
+  const dataUris = new Set([
+    ...(htmlStr.match(DATA_IMAGE_PATTERN) ?? []),
+    ...(designStr.match(DATA_IMAGE_PATTERN) ?? [])
+  ])
+
+  for (const dataUri of dataUris) {
+    try {
+      const [, contentType, base64] = dataUri.match(/^data:([^;]+);base64,(.*)$/) ?? []
+      if (!contentType || !base64) continue
+
+      const ext = contentType.split('/')[1]?.split('+')[0] || 'png'
+      const filename = `image-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+
+      const formData = new FormData()
+      formData.append('name', filename)
+      formData.append('file', new Blob([Buffer.from(base64, 'base64')], { type: contentType }), filename)
+
+      const record = await pb.collection('template_images').create(formData)
+      const pbUrl = `${pocketbaseUrl}/api/files/template_images/${record.id}/${record.file}`
+
+      htmlStr = htmlStr.split(dataUri).join(pbUrl)
+      designStr = designStr.split(dataUri).join(pbUrl)
+      imageIds.push(record.id)
+    } catch {
+      // Mantém o data URI original se o upload falhar
+    }
+  }
 
   for (const url of externalUrls) {
     try {
@@ -72,9 +106,12 @@ export class EmailTemplatesService<
 {
   constructor(public options: EmailTemplatesServiceOptions) {}
 
-  async find(_params?: ServiceParams): Promise<EmailTemplate[]> {
+  async find(params?: ServiceParams): Promise<EmailTemplate[]> {
+    // Exemplos da galeria ficam fora da listagem, a menos que pedidos com
+    // ?is_example=true (usado pela galeria do frontend).
+    const wantExamples = params?.query?.is_example === true
     const records = await pb.collection('email_templates').getFullList({ sort: '-created' })
-    return records.map(this._serialize)
+    return records.filter((r) => isExampleTemplate(r) === wantExamples).map(this._serialize)
   }
 
   async get(id: Id, _params?: ServiceParams): Promise<EmailTemplate> {
