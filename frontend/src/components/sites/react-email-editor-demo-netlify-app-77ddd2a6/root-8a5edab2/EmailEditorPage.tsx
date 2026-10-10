@@ -7,7 +7,7 @@ import type { CSSProperties, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import grapesjs from "grapesjs";
-import type { Editor } from "grapesjs";
+import type { Component, Editor, ToolbarButtonProps } from "grapesjs";
 import mjmlPlugin from "grapesjs-mjml";
 import mjml from "mjml-browser";
 
@@ -260,6 +260,9 @@ async function uploadAssets(
  *
  * Selection has to be re-applied when the input takes focus, because clicking
  * outside the canvas iframe drops the anchor's caret inside the editor doc.
+ *
+ * Buttons are links themselves (mj-button's `href`). Wrapping their text in an
+ * <a> just recolors the label, so for buttons the same panel edits `href`.
  */
 function installLinkAction(editor: Editor): void {
   const rte = editor.RichTextEditor as unknown as {
@@ -276,6 +279,8 @@ function installLinkAction(editor: Editor): void {
     icon: '<span style="font-size:14px;font-weight:700">🔗</span>',
     attributes: { title: "Insert link" },
     state: (_rte: unknown, doc: Document): number => {
+      const button = selectedButton(editor);
+      if (button) return button.getAttributes().href ? 1 : 0;
       const sel = doc.getSelection();
       if (!sel || sel.rangeCount === 0) return 0;
       const node = sel.anchorNode as Node | null;
@@ -286,8 +291,49 @@ function installLinkAction(editor: Editor): void {
       selection: () => Selection | null;
       exec: (cmd: string, value?: string) => void;
     }) => {
-      openLinkPanel(rteInstance);
+      const button = selectedButton(editor);
+      if (button) openButtonLinkPanel(button);
+      else openLinkPanel(rteInstance);
     },
+  });
+
+  // Link icon in the selected button's toolbar, next to move/clone/delete.
+  editor.on("component:selected", (component: Component) => {
+    if (component.get("type") !== "mj-button") return;
+    const toolbar = (component.get("toolbar") ?? []) as ToolbarButtonProps[];
+    if (toolbar.some((item) => item.id === BUTTON_LINK_TOOLBAR_ID)) return;
+    component.set("toolbar", [
+      {
+        id: BUTTON_LINK_TOOLBAR_ID,
+        label:
+          '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:middle"><path fill="currentColor" d="M10.6 13.4a1 1 0 0 1 0-1.4l3.5-3.5a1 1 0 1 1 1.4 1.4L12 13.4a1 1 0 0 1-1.4 0ZM8.5 20a4.5 4.5 0 0 1-3.2-7.7l2.5-2.5a1 1 0 1 1 1.4 1.4l-2.5 2.5a2.5 2.5 0 0 0 3.5 3.5l2.5-2.5a1 1 0 1 1 1.4 1.4l-2.5 2.5A4.5 4.5 0 0 1 8.5 20Zm7.8-5.4a1 1 0 0 1-.7-1.7l2.5-2.5a2.5 2.5 0 0 0-3.5-3.5l-2.5 2.5a1 1 0 1 1-1.4-1.4l2.5-2.5a4.5 4.5 0 0 1 6.4 6.4l-2.5 2.5a1 1 0 0 1-.8.2Z"/></svg>',
+        attributes: { title: "Button link" },
+        command: () => openButtonLinkPanel(component),
+      },
+      ...toolbar,
+    ]);
+  });
+}
+
+const BUTTON_LINK_TOOLBAR_ID = "button-link";
+
+function selectedButton(editor: Editor): Component | null {
+  let current: Component | undefined = editor.getSelected();
+  while (current) {
+    if (current.get("type") === "mj-button") return current;
+    current = current.parent();
+  }
+  return null;
+}
+
+function openButtonLinkPanel(button: Component): void {
+  const currentHref = (button.getAttributes().href as string | undefined) ?? "";
+  showLinkPanel({
+    label: "Button",
+    currentHref: currentHref || "https://",
+    canRemove: !!currentHref,
+    onSave: (url) => button.addAttributes({ href: url }),
+    onRemove: () => button.removeAttributes("href"),
   });
 }
 
@@ -297,10 +343,6 @@ interface RteBridge {
 }
 
 function openLinkPanel(rte: RteBridge): void {
-  // Close any previously open panel so we never stack them.
-  const existing = document.getElementById("gjs-link-panel");
-  existing?.remove();
-
   const sel = rte.selection();
   if (!sel) return;
   const iframeDoc = sel.anchorNode?.ownerDocument ?? null;
@@ -311,11 +353,91 @@ function openLinkPanel(rte: RteBridge): void {
   const savedHadSelection = !!savedRange && !savedRange.collapsed;
   const anchor =
     (sel.anchorNode as Node | null)?.parentElement?.closest("a") ?? null;
-  const currentHref = anchor?.getAttribute("href") ?? "https://";
+
+  const restoreSelection = () => {
+    if (!savedRange) return;
+    const iframeWin = iframeDoc.defaultView;
+    const iframeSel = iframeWin?.getSelection();
+    if (!iframeSel) return;
+    iframeSel.removeAllRanges();
+    iframeSel.addRange(savedRange);
+  };
+
+  showLinkPanel({
+    label: anchor ? "Edit" : "Link",
+    currentHref: anchor?.getAttribute("href") ?? "https://",
+    canRemove: !!anchor,
+    onSave: (trimmed) => {
+      restoreSelection();
+      if (anchor) {
+        anchor.setAttribute("href", trimmed);
+        anchor.setAttribute("target", "_blank");
+        anchor.setAttribute("rel", "noreferrer");
+      } else if (savedHadSelection) {
+        rte.exec("createLink", trimmed);
+      } else {
+        const html = `<a href="${trimmed}" target="_blank" rel="noreferrer">${trimmed}</a>`;
+        try {
+          rte.exec("insertHTML", html);
+        } catch {
+          /* fall back: insert at caret via range */
+          if (savedRange) {
+            const anchorEl = iframeDoc.createElement("a");
+            anchorEl.href = trimmed;
+            anchorEl.target = "_blank";
+            anchorEl.rel = "noreferrer";
+            anchorEl.textContent = trimmed;
+            savedRange.insertNode(anchorEl);
+          }
+        }
+      }
+      const post = rte.selection();
+      const postAnchor = (post?.anchorNode as Node | null)?.parentElement?.closest(
+        "a",
+      );
+      if (postAnchor && postAnchor.getAttribute("href") === trimmed) {
+        postAnchor.setAttribute("target", "_blank");
+        postAnchor.setAttribute("rel", "noreferrer");
+      }
+    },
+    onRemove: () => {
+      restoreSelection();
+      if (anchor) {
+        const parent = anchor.parentNode;
+        while (anchor.firstChild) parent?.insertBefore(anchor.firstChild, anchor);
+        parent?.removeChild(anchor);
+      }
+    },
+  });
+}
+
+interface LinkPanelOptions {
+  label: string;
+  currentHref: string;
+  canRemove: boolean;
+  onSave: (url: string) => void;
+  onRemove: () => void;
+}
+
+function showLinkPanel({
+  label: labelText,
+  currentHref,
+  canRemove,
+  onSave,
+  onRemove,
+}: LinkPanelOptions): void {
+  // Close any previously open panel so we never stack them.
+  const existing = document.getElementById("gjs-link-panel");
+  existing?.remove();
 
   // Slot the panel INSIDE the RTE floating toolbar, above the B/I/U/S/🔗/Text
-  // row. Falls back to positioned float if the toolbar isn't in the DOM yet.
-  const toolbar = document.querySelector<HTMLElement>(".gjs-rte-toolbar");
+  // row. Without an open RTE (button toolbar), float it under the component
+  // toolbar instead.
+  const rteToolbar = document.querySelector<HTMLElement>(".gjs-rte-toolbar");
+  const toolbar =
+    rteToolbar && rteToolbar.offsetParent !== null && rteToolbar.style.display !== "none"
+      ? rteToolbar
+      : null;
 
   const panel = document.createElement("div");
   panel.id = "gjs-link-panel";
@@ -335,7 +457,7 @@ function openLinkPanel(rte: RteBridge): void {
   ].join(";");
 
   const label = document.createElement("span");
-  label.textContent = anchor ? "Edit" : "Link";
+  label.textContent = labelText;
   label.style.cssText =
     "color:#9ca3af;font-weight:700;letter-spacing:0.03em;padding:0 4px;white-space:nowrap";
 
@@ -376,7 +498,7 @@ function openLinkPanel(rte: RteBridge): void {
   };
 
   const saveBtn = btn("Save", "#22c55e", "#052e12");
-  const unlinkBtn = anchor ? btn("×", "#f87171", "#450a0a") : null;
+  const unlinkBtn = canRemove ? btn("×", "#f87171", "#450a0a") : null;
   if (unlinkBtn) {
     unlinkBtn.setAttribute("title", "Remove link");
     unlinkBtn.setAttribute("aria-label", "Remove link");
@@ -391,9 +513,13 @@ function openLinkPanel(rte: RteBridge): void {
   if (toolbar) {
     toolbar.prepend(panel);
   } else {
+    const anchorRect = document
+      .querySelector<HTMLElement>(".gjs-toolbar")
+      ?.getBoundingClientRect();
     panel.style.position = "fixed";
-    panel.style.top = "100px";
-    panel.style.left = "100px";
+    panel.style.top = `${anchorRect ? anchorRect.bottom + 6 : 100}px`;
+    panel.style.left = `${anchorRect ? Math.max(8, anchorRect.right - 380) : 100}px`;
+    panel.style.width = "380px";
     panel.style.background = "#111";
     panel.style.borderRadius = "6px";
     panel.style.boxShadow = "0 4px 16px rgba(0,0,0,0.25)";
@@ -403,15 +529,6 @@ function openLinkPanel(rte: RteBridge): void {
   input.focus();
   input.select();
 
-  const restoreSelection = () => {
-    if (!savedRange) return;
-    const iframeWin = iframeDoc.defaultView;
-    const iframeSel = iframeWin?.getSelection();
-    if (!iframeSel) return;
-    iframeSel.removeAllRanges();
-    iframeSel.addRange(savedRange);
-  };
-
   const cleanup = () => {
     document.removeEventListener("mousedown", onDocClick, true);
     document.removeEventListener("keydown", onKey, true);
@@ -420,56 +537,15 @@ function openLinkPanel(rte: RteBridge): void {
 
   const applyUrl = (rawUrl: string) => {
     const trimmed = rawUrl.trim();
-    if (!trimmed) {
-      cleanup();
-      return;
-    }
-    restoreSelection();
-    if (anchor) {
-      anchor.setAttribute("href", trimmed);
-      anchor.setAttribute("target", "_blank");
-      anchor.setAttribute("rel", "noreferrer");
-    } else if (savedHadSelection) {
-      rte.exec("createLink", trimmed);
-    } else {
-      const html = `<a href="${trimmed}" target="_blank" rel="noreferrer">${trimmed}</a>`;
-      try {
-        rte.exec("insertHTML", html);
-      } catch {
-        /* fall back: insert at caret via range */
-        if (savedRange) {
-          const anchorEl = iframeDoc.createElement("a");
-          anchorEl.href = trimmed;
-          anchorEl.target = "_blank";
-          anchorEl.rel = "noreferrer";
-          anchorEl.textContent = trimmed;
-          savedRange.insertNode(anchorEl);
-        }
-      }
-    }
-    const post = rte.selection();
-    const postAnchor = (post?.anchorNode as Node | null)?.parentElement?.closest(
-      "a",
-    );
-    if (postAnchor && postAnchor.getAttribute("href") === trimmed) {
-      postAnchor.setAttribute("target", "_blank");
-      postAnchor.setAttribute("rel", "noreferrer");
-    }
-    cleanup();
-  };
-
-  const removeLink = () => {
-    restoreSelection();
-    if (anchor) {
-      const parent = anchor.parentNode;
-      while (anchor.firstChild) parent?.insertBefore(anchor.firstChild, anchor);
-      parent?.removeChild(anchor);
-    }
+    if (trimmed) onSave(trimmed);
     cleanup();
   };
 
   saveBtn.addEventListener("click", () => applyUrl(input.value));
-  unlinkBtn?.addEventListener("click", removeLink);
+  unlinkBtn?.addEventListener("click", () => {
+    onRemove();
+    cleanup();
+  });
 
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -493,6 +569,7 @@ function openLinkPanel(rte: RteBridge): void {
     document.addEventListener("keydown", onKey, true);
   }, 0);
 }
+
 
 function hydrateEditor(editor: Editor, tpl: EmailTemplate): void {
   try {
