@@ -200,7 +200,15 @@ const emptyGalleryStyle: CSSProperties = {
 
 const GALLERY_PAGE_SIZE = 8;
 
-export function TemplateListPage() {
+/*
+ * One page, two routes:
+ *   "home"      (/)          → the user's templates (normal + cloned)
+ *   "templates" (/gallery)   → the example gallery to start from
+ * Each view only fetches what it shows.
+ */
+export type TemplateListView = "home" | "templates";
+
+export function TemplateListPage({ view }: { view: TemplateListView }) {
   const router = useRouter();
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -210,19 +218,19 @@ export function TemplateListPage() {
   const [galleryPage, setGalleryPage] = useState(0);
 
   useEffect(() => {
-    Promise.all([templatesApi.listExamples(), templatesApi.list()])
-      .then(([exampleList, userList]) => setTemplates([...exampleList, ...userList]))
+    (view === "templates" ? templatesApi.listExamples() : templatesApi.list())
+      .then(setTemplates)
       .catch((err: Error) => setError(err.message ?? "Failed to load"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [view]);
 
   const examples = useMemo(
     () => templates.filter((t) => getTemplateMeta(t).is_example),
     [templates],
   );
-  // "All templates" excludes examples — those already appear in the gallery
-  // above. Clones created via "Usar este template" strip the is_example flag,
-  // so they land here.
+  // Home excludes examples — those live in the Templates gallery. Clones
+  // created via "Usar este template" strip the is_example flag, so they land
+  // here.
   const userTemplates = useMemo(
     () => templates.filter((t) => !getTemplateMeta(t).is_example),
     [templates],
@@ -298,7 +306,7 @@ export function TemplateListPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
       <SiteHeader
-        active="templates"
+        active={view}
         actions={
           <Link
             href="/templates/new"
@@ -322,6 +330,7 @@ export function TemplateListPage() {
             </span>
           </p>
         ) : (
+          view === "templates" ? (
           <>
             <div style={sectionHeadingStyle}>
               <h2 style={sectionTitleStyle}>Start from a template</h2>
@@ -399,7 +408,9 @@ export function TemplateListPage() {
                 ) : null}
               </>
             )}
-
+          </>
+          ) : (
+          <>
             <div style={sectionHeadingStyle}>
               <h2 style={sectionTitleStyle}>All templates</h2>
               <span style={sectionSubtitleStyle}>
@@ -409,7 +420,11 @@ export function TemplateListPage() {
 
             {userTemplates.length === 0 ? (
               <p style={emptyStyle}>
-                No templates yet — pick one from the gallery above or{" "}
+                No templates yet — pick one from the{" "}
+                <Link href="/gallery" style={{ color: "#0f172a" }}>
+                  Templates gallery
+                </Link>{" "}
+                or{" "}
                 <Link href="/templates/new" style={{ color: "#0f172a" }}>
                   create one from scratch
                 </Link>
@@ -475,6 +490,7 @@ export function TemplateListPage() {
               </table>
             )}
           </>
+          )
         )}
       </div>
 

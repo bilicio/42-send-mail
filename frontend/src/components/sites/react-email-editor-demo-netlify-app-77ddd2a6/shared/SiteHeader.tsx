@@ -12,7 +12,7 @@ import type { CSSProperties, ReactNode } from "react";
  * the work surface, not another panel competing for attention.
  */
 
-export type SiteHeaderActiveNav = "templates" | "logs" | null;
+export type SiteHeaderActiveNav = "home" | "templates" | "logs" | null;
 
 interface SiteHeaderProps {
   active?: SiteHeaderActiveNav;
@@ -55,7 +55,10 @@ export function SiteHeader({ active = null, actions }: SiteHeaderProps) {
       <span aria-hidden className="h-5 w-px bg-white/[0.08]" />
 
       <nav className="flex items-center gap-1">
-        <NavPill href="/" isActive={active === "templates"}>
+        <NavPill href="/" isActive={active === "home"}>
+          Home
+        </NavPill>
+        <NavPill href="/gallery" isActive={active === "templates"}>
           Templates
         </NavPill>
         <NavPill href="/logs" isActive={active === "logs"}>
