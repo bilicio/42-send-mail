@@ -28,6 +28,7 @@ import {
 } from "@/lib/api";
 import { captureHtmlThumbnail } from "@/lib/thumbnail";
 import { legacyHtmlToMjml } from "@/lib/legacy-mjml";
+import { EmailPreviewModal } from "./EmailPreviewModal";
 import { applyTextColorToLinks, LINK_INHERIT_CANVAS_CSS } from "@/lib/link-colors";
 
 /*
@@ -608,6 +609,9 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveAsExample, setSaveAsExample] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  // Lets the canvas toolbar's eye icon open the same preview as the header.
+  const openPreviewRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -645,6 +649,13 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
 
     editorRef.current = editor;
     installLinkAction(editor);
+    editor.Commands.add("preview", {
+      run: (ed: Editor) => {
+        // Panel buttons are toggles; release it so the eye icon can be clicked again.
+        setTimeout(() => ed.stopCommand("preview"), 0);
+        openPreviewRef.current();
+      },
+    });
 
     if (templateId) {
       templatesApi
@@ -798,21 +809,25 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
     }
   };
 
+  // The exact HTML that gets saved and sent.
+  const compileEmailHtml = async (): Promise<string | null> => {
+    const mjmlSource = editorRef.current?.getHtml() ?? "";
+    if (!mjmlSource.trim()) return null;
+    return applyTextColorToLinks(
+      mjml(mjmlSource, {
+        validationLevel: "soft",
+        keepComments: false,
+      }).html,
+    );
+  };
+
   const handleExport = async () => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    const mjmlSource = editor.getHtml() ?? "";
-    if (!mjmlSource.trim()) {
-      window.alert("Nothing to export yet.");
-      return;
-    }
     try {
-      const html = await applyTextColorToLinks(
-        mjml(mjmlSource, {
-          validationLevel: "soft",
-          keepComments: false,
-        }).html,
-      );
+      const html = await compileEmailHtml();
+      if (html === null) {
+        window.alert("Nothing to export yet.");
+        return;
+      }
       const blob = new Blob([html], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -831,9 +846,23 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
     }
   };
 
-  const handlePreview = () => {
-    editorRef.current?.runCommand("preview");
+  const handlePreview = async () => {
+    try {
+      const html = await compileEmailHtml();
+      if (html === null) {
+        window.alert("Nothing to preview yet.");
+        return;
+      }
+      setPreviewHtml(html);
+    } catch (err) {
+      window.alert(
+        `MJML compile failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   };
+  useEffect(() => {
+    openPreviewRef.current = handlePreview;
+  });
 
   const isNew = !templateId;
   const headerActions = (
@@ -1073,6 +1102,14 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
       </div>
 
       <div ref={containerRef} style={editorShellStyle} />
+
+      {previewHtml !== null ? (
+        <EmailPreviewModal
+          html={previewHtml}
+          subject={subject}
+          onClose={() => setPreviewHtml(null)}
+        />
+      ) : null}
     </div>
   );
 }
