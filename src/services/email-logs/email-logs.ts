@@ -17,13 +17,46 @@ function serialize(r: any) {
   }
 }
 
+const MAX_PER_PAGE = 100
+
+function toPositiveInt(valor: unknown, padrao: number): number {
+  const n = Number.parseInt(String(valor ?? ''), 10)
+  return Number.isFinite(n) && n > 0 ? n : padrao
+}
+
 export const emailLogs = (app: Application) => {
-  // GET /email-logs — full list (used by the frontend page)
-  ;(app as any).get(`/${emailLogsPath}`, async (_req: any, res: any) => {
+  // GET /email-logs?page=1&perPage=10&search=fulano
+  // Paginado no PocketBase (usado pela página de Logs do frontend): só a página
+  // pedida é carregada. `search` filtra por destinatário, sem diferenciar
+  // maiúsculas/minúsculas (`~` é o LIKE do PocketBase).
+  // Resposta: { items, page, perPage, totalItems, totalPages }.
+  //
+  // Sem nenhum desses parâmetros, mantém o comportamento antigo (lista
+  // completa em array) para não quebrar quem já consome o endpoint.
+  ;(app as any).get(`/${emailLogsPath}`, async (req: any, res: any) => {
+    const { page, perPage, search } = req.query ?? {}
     try {
       await ensureAuth()
-      const records = await pb.collection('email_logs').getFullList({ sort: '-created' })
-      res.json(records.map(serialize))
+
+      if (page === undefined && perPage === undefined && search === undefined) {
+        const records = await pb.collection('email_logs').getFullList({ sort: '-created' })
+        return res.json(records.map(serialize))
+      }
+
+      const termo = normalizeEmail(search)
+      const result = await pb
+        .collection('email_logs')
+        .getList(toPositiveInt(page, 1), Math.min(toPositiveInt(perPage, 10), MAX_PER_PAGE), {
+          sort: '-created',
+          ...(termo ? { filter: pb.filter('to ~ {:termo}', { termo }) } : {})
+        })
+      res.json({
+        items: result.items.map(serialize),
+        page: result.page,
+        perPage: result.perPage,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages
+      })
     } catch (err) {
       console.error('[email-logs] Error:', err)
       res.status(500).json({ error: 'Failed to fetch logs', details: String(err) })

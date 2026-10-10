@@ -188,10 +188,23 @@ export const sendEmailApi = {
     request<{ ok: true }>("POST", "/send-email", payload),
 };
 
+export interface EmailLogPage {
+  items: EmailLog[];
+  page: number;
+  perPage: number;
+  totalItems: number;
+  totalPages: number;
+}
+
 export const emailLogsApi = {
-  list: async (): Promise<EmailLog[]> => {
-    const payload = await request<unknown>("GET", "/email-logs");
-    return extractList<EmailLog>(payload);
+  // Server-side pagination; `search` matches the recipient, case-insensitive.
+  list: (params: { page: number; perPage: number; search?: string }) => {
+    const qs = new URLSearchParams({
+      page: String(params.page),
+      perPage: String(params.perPage),
+    });
+    if (params.search?.trim()) qs.set("search", params.search.trim());
+    return request<EmailLogPage>("GET", `/email-logs?${qs}`);
   },
 };
 
