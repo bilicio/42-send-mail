@@ -133,7 +133,7 @@ export function SendTestPage({ templateId }: { templateId: string }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f9f9f9" }}>
+    <div style={{ minHeight: "100vh", background: "#f9f9f9", paddingBottom: 48 }}>
       <SiteHeader
         actions={
           <Link

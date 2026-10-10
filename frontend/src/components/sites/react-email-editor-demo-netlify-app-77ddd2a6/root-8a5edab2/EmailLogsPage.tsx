@@ -155,7 +155,7 @@ export function EmailLogsPage() {
   const lastItem = Math.min(page * perPage, totalItems);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f9f9f9" }}>
+    <div style={{ minHeight: "100vh", background: "#f9f9f9", paddingBottom: 48 }}>
       <SiteHeader active="logs" />
       <div style={containerStyle}>
         <h2 style={{ margin: "0 0 24px 0", fontSize: 22 }}>Email Logs</h2>

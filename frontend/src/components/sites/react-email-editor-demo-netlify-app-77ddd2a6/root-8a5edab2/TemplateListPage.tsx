@@ -304,7 +304,7 @@ export function TemplateListPage({ view }: { view: TemplateListView }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
+    <div style={{ minHeight: "100vh", background: "#f8fafc", paddingBottom: 48 }}>
       <SiteHeader
         active={view}
         actions={
