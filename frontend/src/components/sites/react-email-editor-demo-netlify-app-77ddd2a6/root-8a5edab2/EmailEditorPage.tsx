@@ -28,6 +28,7 @@ import {
 } from "@/lib/api";
 import { captureHtmlThumbnail } from "@/lib/thumbnail";
 import { legacyHtmlToMjml } from "@/lib/legacy-mjml";
+import { applyTextColorToLinks, LINK_INHERIT_CANVAS_CSS } from "@/lib/link-colors";
 
 /*
  * Layout math for grapesjs: 60px header + 45px meta bar + 45px variables bar
@@ -540,6 +541,7 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
       height: EDITOR_HEIGHT_CSS,
       width: "auto",
       storageManager: false,
+      canvasCss: LINK_INHERIT_CANVAS_CSS,
       assetManager: {
         // Only enables the upload input; uploadFile below does the request.
         upload: "/template-thumbnails",
@@ -662,6 +664,7 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
       } catch {
         /* keep raw mjml as fallback so save still succeeds */
       }
+      html = await applyTextColorToLinks(html);
       let designJson = editorRef.current.getProjectData() as Record<
         string,
         unknown
@@ -718,7 +721,7 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
     }
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const editor = editorRef.current;
     if (!editor) return;
     const mjmlSource = editor.getHtml() ?? "";
@@ -727,10 +730,12 @@ export function EmailEditorPage({ templateId }: EmailEditorPageProps) {
       return;
     }
     try {
-      const { html } = mjml(mjmlSource, {
-        validationLevel: "soft",
-        keepComments: false,
-      });
+      const html = await applyTextColorToLinks(
+        mjml(mjmlSource, {
+          validationLevel: "soft",
+          keepComments: false,
+        }).html,
+      );
       const blob = new Blob([html], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

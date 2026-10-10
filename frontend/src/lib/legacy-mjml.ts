@@ -21,6 +21,8 @@
  * sections can at least be dragged above/below it.
  */
 
+import { stripDefaultLinkBlue } from "./link-colors";
+
 const MSO_COMMENTS = /<!--\[if[\s\S]*?<!\[endif\]-->|<!--<!\[endif\]-->|<!--\[if[^\]]*\]><!-->/g;
 
 function escapeAttr(value: string): string {
@@ -211,6 +213,7 @@ export function legacyHtmlToMjml(html: string): string {
   if (isMjml(html)) return html;
 
   const doc = new DOMParser().parseFromString(html, "text/html");
+  stripDefaultLinkBlue(doc);
   const css = collectStyles(doc);
   const head = css ? `<mj-head><mj-style>${css}</mj-style></mj-head>` : "";
 
