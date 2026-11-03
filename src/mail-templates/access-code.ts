@@ -10,8 +10,9 @@ export const accessCodeTemplate = {
   name: ACCESS_CODE_TEMPLATE_NAME,
   subject: 'Seu código de acesso',
   variables: ['code'],
-  // Vazio: o editor monta o MJML a partir do HTML ao abrir.
-  design_json: {},
+  // Sem `pages`, o editor monta o MJML a partir do HTML ao abrir. Não pode ser
+  // {}: o PocketBase trata objeto vazio como campo obrigatório em branco.
+  design_json: { __meta: { is_example: false, thumbnail_url: null } },
   html_content: `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
