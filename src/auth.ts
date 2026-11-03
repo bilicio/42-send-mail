@@ -2,7 +2,8 @@
  * Login do painel por email + código de 6 dígitos.
  *
  * Só quem está em AUTH_ALLOWED_EMAILS (lista separada por vírgula no .env)
- * consegue pedir um código. O código vai por email, vale CODE_TTL_MS e aceita
+ * consegue pedir um código. O código vai por email (template "Código de acesso",
+ * via o serviço send-email), vale CODE_TTL_MS e aceita
  * MAX_ATTEMPTS tentativas. Acertando, o servidor devolve um token assinado
  * (HMAC com AUTH_SECRET) que o frontend manda no header Authorization.
  *
@@ -14,8 +15,9 @@ import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 
 import type { Application } from './declarations'
 import { logger } from './logger'
 import { normalizeEmail } from './utils/email'
-import { scheduleEmailSend } from './services/email-rate-limiter'
-import { createMailTransport, mailFrom } from './mailer'
+import { NotFound } from '@feathersjs/errors'
+import { pb, ensureAuth } from './db'
+import { ACCESS_CODE_TEMPLATE_NAME, accessCodeTemplate } from './mail-templates/access-code'
 
 const CODE_TTL_MS = 10 * 60 * 1000
 const RESEND_INTERVAL_MS = 60 * 1000
@@ -95,19 +97,41 @@ const pending = new Map<string, PendingCode>()
 const hashCode = (email: string, code: string) =>
   createHash('sha256').update(`${email}:${code}`).digest('hex')
 
-async function sendCodeEmail(to: string, code: string) {
-  const transporter = createMailTransport()
-  await scheduleEmailSend(() =>
-    transporter.sendMail({
-      from: mailFrom(),
-      to,
-      subject: `Seu código de acesso: ${code}`,
-      text: `Seu código de acesso ao Email Editor é ${code}.\n\nEle expira em 10 minutos. Se não foi você que pediu, ignore este email.`,
-      html: `<p>Seu código de acesso ao Email Editor é:</p>
-<p style="font-size:28px;font-weight:bold;letter-spacing:6px;font-family:monospace">${code}</p>
-<p style="color:#6b7280">Ele expira em 10 minutos. Se não foi você que pediu, ignore este email.</p>`
-    })
-  )
+// ID do template do código no PocketBase. AUTH_CODE_TEMPLATE_ID fixa um
+// template específico; sem ela, usamos o template chamado "Código de acesso",
+// criando-o na primeira vez.
+let codeTemplateId: string | null = null
+
+export async function ensureCodeTemplate(): Promise<string> {
+  if (codeTemplateId) return codeTemplateId
+  const fromEnv = process.env.AUTH_CODE_TEMPLATE_ID?.trim()
+  if (fromEnv) return (codeTemplateId = fromEnv)
+
+  await ensureAuth()
+  try {
+    const existing = await pb
+      .collection('email_templates')
+      .getFirstListItem(pb.filter('name = {:name}', { name: ACCESS_CODE_TEMPLATE_NAME }))
+    return (codeTemplateId = existing.id)
+  } catch (err: any) {
+    if (err?.status !== 404) throw err
+  }
+  const created = await pb.collection('email_templates').create(accessCodeTemplate)
+  logger.info(`[auth] template "${ACCESS_CODE_TEMPLATE_NAME}" criado`)
+  return (codeTemplateId = created.id)
+}
+
+async function sendCodeEmail(app: Application, to: string, code: string) {
+  const send = async () =>
+    app.service('send-email').create({ templateId: await ensureCodeTemplate(), to, variables: { code } })
+  try {
+    await send()
+  } catch (err) {
+    // Template apagado depois de ficar em cache: procura (ou recria) e tenta de novo.
+    if (!(err instanceof NotFound) || process.env.AUTH_CODE_TEMPLATE_ID) throw err
+    codeTemplateId = null
+    await send()
+  }
 }
 
 export const auth = (app: Application) => {
@@ -129,7 +153,7 @@ export const auth = (app: Application) => {
     pending.set(email, { hash: hashCode(email, code), expiresAt: now + CODE_TTL_MS, sentAt: now, attempts: 0 })
 
     try {
-      await sendCodeEmail(email, code)
+      await sendCodeEmail(app, email, code)
       logger.info(`[auth] código enviado para ${email}`)
       res.json({ ok: true })
     } catch (err) {
