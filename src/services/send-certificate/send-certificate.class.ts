@@ -3,7 +3,7 @@ import type { Id, NullableId, Params, ServiceInterface } from '@feathersjs/feath
 
 import type { Application } from '../../declarations'
 
-const nodemailer = require("nodemailer");
+import { createMailTransport, mailFrom } from '../../mailer'
 import type {
   SendCertificate,
   SendCertificateData,
@@ -50,19 +50,10 @@ export class SendCertificateService<ServiceParams extends SendCertificateParams 
     try {
       //const accessToken = await oAuth2Client.getAccessToken()
 
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          type: 'OAuth2',
-          user: 'imersao@42sp.org.br',
-          clientId: process.env.CLIENT_ID,
-          clientSecret: process.env.CLIENT_SECRET,
-          refreshToken: process.env.REFRESH_TOKEN,
-        }
-      })
+      const transporter = createMailTransport()
 
       const mailOptions = {
-        from: 'imersao@42sp.org.br',
+        from: mailFrom(),
         to: data.email, // assuming SendCertificateData has an 'email' field
         subject: 'Parabéns, Exploradores do Conhecimento!',
         //text: `Here is your certificate. ${data.certificateUrl}`,

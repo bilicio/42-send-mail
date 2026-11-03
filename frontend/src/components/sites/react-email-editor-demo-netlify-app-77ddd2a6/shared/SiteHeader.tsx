@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { getSessionEmail, logout } from "@/lib/auth";
 
 /*
  * Header chrome shared across every page. Left cluster: brand mark + wordmark
@@ -20,6 +21,9 @@ interface SiteHeaderProps {
 }
 
 export function SiteHeader({ active = null, actions }: SiteHeaderProps) {
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  useEffect(() => setSessionEmail(getSessionEmail()), []);
+
   return (
     <header className="flex h-[60px] flex-shrink-0 items-center gap-4 border-b border-white/[0.06] bg-[#0b1220] px-4 text-slate-100">
       <Link
@@ -85,6 +89,17 @@ export function SiteHeader({ active = null, actions }: SiteHeaderProps) {
 
       <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
         {actions}
+        <span aria-hidden className="ml-1 h-5 w-px bg-white/[0.08]" />
+        {sessionEmail ? (
+          <span className="hidden text-[12px] text-slate-400 md:inline">{sessionEmail}</span>
+        ) : null}
+        <button
+          type="button"
+          onClick={logout}
+          className="rounded-md px-2 py-1 text-[12.5px] font-medium text-slate-400 transition-colors hover:bg-white/[0.04] hover:text-slate-100"
+        >
+          Sair
+        </button>
       </div>
     </header>
   );

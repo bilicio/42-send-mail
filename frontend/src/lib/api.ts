@@ -4,6 +4,8 @@
  * payload shapes so the backend can be swapped in without changes.
  */
 
+import { authHeaders, handleUnauthorized } from "./auth";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export interface EmailTemplate {
@@ -50,11 +52,14 @@ async function request<T>(
 ): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers:
-      body !== undefined ? { "Content-Type": "application/json" } : undefined,
+    headers: {
+      ...authHeaders(),
+      ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+    },
     body: body !== undefined ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
+  if (res.status === 401) handleUnauthorized();
   if (!res.ok) {
     let msg = `${method} ${path} failed (${res.status})`;
     try {
@@ -135,9 +140,11 @@ export const templateImagesApi = {
     // upload directly in Express.
     const res = await fetch(`${BASE_URL}/template-thumbnails`, {
       method: "POST",
+      headers: authHeaders(),
       body: form,
       cache: "no-store",
     });
+    if (res.status === 401) handleUnauthorized();
     if (!res.ok) {
       throw new Error(`Upload failed (${res.status})`);
     }

@@ -1,3 +1,6 @@
+// Imagens servidas pelo próprio servidor (public/images); APP_URL é a URL pública dele.
+const appUrl = () => (process.env.APP_URL || '').replace(/\/$/, '')
+
 export const certificate = (name: string, certificateUrl: string) => `<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
@@ -118,7 +121,7 @@ table, td { color: #000000; } @media (max-width: 480px) { #u_content_heading_2 .
   <tr>
     <td style="padding-right: 0px;padding-left: 0px;" align="center">
       
-      <img align="center" border="0" src="https://42sp-send-mail.4hkf7y.easypanel.host/images/image-1.png" alt="image" title="image" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 100%;max-width: 600px;" width="600" class="v-src-width v-src-max-width"/>
+      <img align="center" border="0" src="${appUrl()}/images/image-1.png" alt="image" title="image" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 100%;max-width: 600px;" width="600" class="v-src-width v-src-max-width"/>
       
     </td>
   </tr>
@@ -216,7 +219,7 @@ table, td { color: #000000; } @media (max-width: 480px) { #u_content_heading_2 .
   <tr>
     <td style="padding-right: 0px;padding-left: 0px;" align="center">
       
-      <img align="center" border="0" src="https://42sp-send-mail.4hkf7y.easypanel.host/images/image-default.png" alt="Students sitting on stairs." title="Students sitting on stairs." style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 92%;max-width: 533.6px;" width="533.6" class="v-src-width v-src-max-width"/>
+      <img align="center" border="0" src="${appUrl()}/images/image-default.png" alt="Students sitting on stairs." title="Students sitting on stairs." style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 92%;max-width: 533.6px;" width="533.6" class="v-src-width v-src-max-width"/>
       
     </td>
   </tr>
@@ -263,7 +266,7 @@ table, td { color: #000000; } @media (max-width: 480px) { #u_content_heading_2 .
     <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 15px;" valign="top"><![endif]-->
     <table role="presentation" aria-label="LinkedIn icon" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="width: 32px !important;height: 32px !important;display: inline-block;border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 15px">
       <tbody><tr style="vertical-align: top"><td valign="middle" style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
-        <a href="https://www.linkedin.com/school/42-sao-paulo/" title="LinkedIn" target="_blank" style="color: rgb(0, 0, 238); text-decoration: underline; line-height: inherit;"><img src="https://42sp-send-mail.4hkf7y.easypanel.host/images/image-3.png" alt="LinkedIn icon" title="LinkedIn" width="32" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
+        <a href="https://www.linkedin.com/school/42-sao-paulo/" title="LinkedIn" target="_blank" style="color: rgb(0, 0, 238); text-decoration: underline; line-height: inherit;"><img src="${appUrl()}/images/image-3.png" alt="LinkedIn icon" title="LinkedIn" width="32" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
         </a>
       </td></tr>
     </tbody></table>
@@ -272,7 +275,7 @@ table, td { color: #000000; } @media (max-width: 480px) { #u_content_heading_2 .
     <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 15px;" valign="top"><![endif]-->
     <table role="presentation" aria-label="Instagram icon" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="width: 32px !important;height: 32px !important;display: inline-block;border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 15px">
       <tbody><tr style="vertical-align: top"><td valign="middle" style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
-        <a href="https://www.instagram.com/42saopaulo" title="Instagram" target="_blank" style="color: rgb(0, 0, 238); text-decoration: underline; line-height: inherit;"><img src="https://42sp-send-mail.4hkf7y.easypanel.host/images/image-4.png" alt="Instagram icon" title="Instagram" width="32" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
+        <a href="https://www.instagram.com/42saopaulo" title="Instagram" target="_blank" style="color: rgb(0, 0, 238); text-decoration: underline; line-height: inherit;"><img src="${appUrl()}/images/image-4.png" alt="Instagram icon" title="Instagram" width="32" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
         </a>
       </td></tr>
     </tbody></table>

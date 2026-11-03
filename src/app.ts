@@ -21,6 +21,8 @@ import { services } from './services/index'
 import { channels } from './channels'
 import { pb } from './db'
 import { isExampleTemplate } from './utils/template'
+import { auth, requireAuth } from './auth'
+import { NotAuthenticated } from '@feathersjs/errors'
 
 const app: Application = express(feathers())
 
@@ -41,6 +43,20 @@ app.use(json({ limit: '10mb' }))
 app.use(urlencoded({ extended: true, limit: '10mb' }))
 // Host the public folder
 app.use('/', serveStatic(app.get('public')))
+
+// ── Login do painel ───────────────────────────────────────────────────────────
+// Rotas usadas só pelo painel exigem o token de login (ver src/auth.ts). Ficam
+// abertas as que outros apps da 42 consomem: /send-email, /send-certificate,
+// /get-templates e POST /email-logs/query.
+app.configure(auth)
+const PROTECTED_SERVICES = ['templates', 'template-images']
+for (const path of ['/upload-slot', '/template-thumbnails', ...PROTECTED_SERVICES.map((p) => `/${p}`)]) {
+  app.use(path, requireAuth)
+}
+app.use('/email-logs', (req: any, res: any, next: any) =>
+  req.method === 'GET' ? requireAuth(req, res, next) : next()
+)
+// ──────────────────────────────────────────────────────────────────────────────
 
 // ── Unlayer image upload interception ─────────────────────────────────────────
 // Unlayer's editor calls api.unlayer.com/v2/images/upload-url to get a presigned
@@ -132,7 +148,10 @@ app.configure(rest())
 app.configure(
   socketio({
     cors: {
-      origin: app.get('origins')
+      // ALLOWED_ORIGINS no .env (separadas por vírgula) substitui o config.
+      origin: process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+        : app.get('origins')
     }
   })
 )
@@ -148,7 +167,17 @@ app.hooks({
   around: {
     all: [logError]
   },
-  before: {},
+  before: {
+    // O middleware acima só cobre REST; pelo websocket esses serviços ficam
+    // fechados (o painel não usa socket).
+    all: [
+      async (context) => {
+        if (context.params.provider === 'socketio' && PROTECTED_SERVICES.includes(context.path)) {
+          throw new NotAuthenticated('Não autenticado')
+        }
+      }
+    ]
+  },
   after: {},
   error: {}
 })

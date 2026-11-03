@@ -9,10 +9,10 @@ import type {
   SendEmailQuery
 } from './send-email.schema'
 
-const nodemailer = require('nodemailer')
 import { logger } from '../../logger'
 import { scheduleEmailSend } from '../email-rate-limiter'
 import { normalizeEmail } from '../../utils/email'
+import { createMailTransport, mailFrom } from '../../mailer'
 
 export type { SendEmail, SendEmailData, SendEmailPatch, SendEmailQuery }
 
@@ -48,20 +48,11 @@ export class SendEmailService<ServiceParams extends SendEmailParams = SendEmailP
 
     // 3. Send via Gmail OAuth2
     try {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          type: 'OAuth2',
-          user: 'imersao@42sp.org.br',
-          clientId: process.env.CLIENT_ID,
-          clientSecret: process.env.CLIENT_SECRET,
-          refreshToken: process.env.REFRESH_TOKEN
-        }
-      })
+      const transporter = createMailTransport()
 
       await scheduleEmailSend(() =>
         transporter.sendMail({
-          from: 'imersao@42sp.org.br',
+          from: mailFrom(),
           to: data.to,
           subject,
           html
